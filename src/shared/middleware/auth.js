@@ -10,7 +10,7 @@ async function authenticate(req, _res, next) {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
 
     // Single active session: reject access tokens minted before the user's most
     // recent login. Only enforced when the token carries a version (tv) and the
