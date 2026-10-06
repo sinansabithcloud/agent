@@ -25,7 +25,7 @@ class WebSocketServer {
             done(false, 401, 'Authentication required');
             return;
           }
-          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
           info.req.user = decoded;
           done(true);
         } catch {

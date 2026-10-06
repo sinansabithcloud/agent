@@ -14,7 +14,7 @@ function createServiceApp({ serviceName, corsOrigins }) {
   app.use(hpp());
   app.use(
     cors({
-      origin: corsOrigins || process.env.CORS_ORIGINS?.split(',') || '*',
+      origin: corsOrigins || process.env.CORS_ORIGINS?.split(',') || [],
       credentials: true,
     }),
   );
