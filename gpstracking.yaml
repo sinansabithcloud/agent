@@ -1,0 +1,93 @@
+# =====================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpstracking-service-app
+  namespace: dev
+  labels:
+    app: gpstracking-service
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: gpstracking-service
+  template:
+    metadata:
+      labels:
+        app: gpstracking-service
+    spec:
+      imagePullSecrets:
+        - name: acr-secret
+      containers:
+        - name: gpstracking-service
+          image: phazacrshareddev001.azurecr.io/ms-api-002-gpstracking-0103:tawseelq-qa
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: gpstracking-service-secrets
+          ports:
+            - containerPort: 3006
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            tcpSocket:
+              port: 3006
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 3006
+            initialDelaySeconds: 30
+            periodSeconds: 15
+---
+# =====================================================
+# Service
+# =====================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: gpstracking-service
+  namespace: dev
+spec:
+  selector:
+    app: gpstracking-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 3006
+  type: ClusterIP
+---
+# =====================================================
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: gpstracking-service-vs
+  namespace: dev
+spec:
+  hosts:
+    - tawseelqapiqa.powermindinc.com
+  gateways:
+    - istio-system/tawseelq-gateway
+  http:
+    - match:
+        - uri:
+            exact: /gps
+      redirect:
+        uri: /gps/
+    - match:
+        - uri:
+            prefix: /gps/
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: gpstracking-service.dev.svc.cluster.local
+            port:
+              number: 80
